@@ -1,9 +1,12 @@
-<!DOCTYPE html>
+// ユーザー切り替え
+        function switchUser(user) {
+            selectUser(user);
+        }<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ダイエット管理 - クラウド版</title>
+    <title>夫婦ダイエット管理 - クラウド版</title>
     <style>
         * {
             margin: 0;
@@ -29,7 +32,7 @@
         .header {
             background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
             color: white;
-            padding: 30px 20px 20px;
+            padding: 20px 20px 15px;
             text-align: center;
             position: sticky;
             top: 0;
@@ -37,40 +40,67 @@
         }
 
         .header h1 {
-            font-size: 24px;
+            font-size: 22px;
             margin-bottom: 5px;
         }
 
         .header .subtitle {
             opacity: 0.9;
-            font-size: 14px;
+            font-size: 13px;
             margin-bottom: 15px;
+        }
+
+        .user-selector {
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .user-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 15px;
+            background: transparent;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .user-btn.active {
+            background: white;
+            color: #333;
+            font-weight: bold;
         }
 
         .sync-status {
             background: rgba(255,255,255,0.2);
-            border-radius: 20px;
-            padding: 8px 16px;
-            font-size: 12px;
+            border-radius: 15px;
+            padding: 6px 12px;
+            font-size: 11px;
             display: inline-block;
         }
 
         .nav-tabs {
             display: flex;
             background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            margin-top: 15px;
-            padding: 5px;
+            border-radius: 12px;
+            margin-top: 10px;
+            padding: 3px;
         }
 
         .nav-tab {
             flex: 1;
-            padding: 10px;
+            padding: 8px 4px;
             text-align: center;
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s;
-            font-size: 14px;
+            font-size: 12px;
         }
 
         .nav-tab.active {
@@ -133,7 +163,7 @@
         }
 
         .stat-value {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: bold;
             color: white;
             margin-bottom: 5px;
@@ -141,7 +171,49 @@
 
         .stat-label {
             color: rgba(255,255,255,0.9);
+            font-size: 13px;
+        }
+
+        .advice-card {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .advice-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .advice-text {
+            color: rgba(255,255,255,0.95);
             font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .progress-ring {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 15px;
+        }
+
+        .progress-ring circle {
+            fill: transparent;
+            stroke: rgba(255,255,255,0.3);
+            stroke-width: 8;
+        }
+
+        .progress-ring .progress {
+            stroke: white;
+            stroke-dasharray: 0 251;
+            transition: stroke-dasharray 0.5s;
         }
 
         .input-group {
@@ -258,6 +330,7 @@
             font-family: monospace;
             word-break: break-all;
             margin-bottom: 15px;
+            font-size: 12px;
         }
 
         .copy-btn {
@@ -269,17 +342,43 @@
             cursor: pointer;
             font-size: 12px;
         }
+
+        .emoji {
+            font-size: 18px;
+        }
+
+        @media (max-width: 480px) {
+            .stat-value {
+                font-size: 24px;
+            }
+            
+            .nav-tab {
+                font-size: 11px;
+                padding: 6px 2px;
+            }
+            
+            .user-btn {
+                font-size: 12px;
+                padding: 6px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>☁️ ダイエット管理</h1>
+            <h1>👫 夫婦ダイエット管理</h1>
             <p class="subtitle">クラウド同期で安心・安全</p>
+            
+            <div class="user-selector" id="userSelector">
+                <div class="loading">👤 ユーザーを読み込み中...</div>
+            </div>
+            
             <div class="sync-status" id="syncStatus">🔄 接続確認中...</div>
             
             <div class="nav-tabs">
-                <div class="nav-tab active" onclick="showTab('setup')">セットアップ</div>
+                <div class="nav-tab active" onclick="showTab('users')">ユーザー管理</div>
+                <div class="nav-tab" onclick="showTab('setup')">セットアップ</div>
                 <div class="nav-tab" onclick="showTab('dashboard')">ダッシュボード</div>
                 <div class="nav-tab" onclick="showTab('input')">体重入力</div>
                 <div class="nav-tab" onclick="showTab('history')">履歴</div>
@@ -287,8 +386,29 @@
         </div>
 
         <div class="content">
+            <!-- ユーザー管理 -->
+            <div id="users" class="tab-content active">
+                <div class="setup-card">
+                    <h3>👤 ユーザー管理</h3>
+                    <p>ダイエットを管理するユーザーを追加・選択できます</p>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">新しいユーザーを追加</label>
+                    <input type="text" id="newUserName" class="input-field" placeholder="例: 太郎、花子、ママ、パパ">
+                </div>
+
+                <button class="btn btn-secondary" onclick="addNewUser()">👤 ユーザーを追加</button>
+
+                <div id="userList" style="margin-top: 20px;">
+                    <div class="loading">🔄 ユーザー一覧を読み込み中...</div>
+                </div>
+
+                <div id="userResult"></div>
+            </div>
+
             <!-- セットアップ -->
-            <div id="setup" class="tab-content active">
+            <div id="setup" class="tab-content">
                 <div class="setup-card">
                     <h3>🚀 初期セットアップ</h3>
                     <p>Google スプレッドシートと連携してデータを安全に保存しましょう</p>
@@ -304,111 +424,7 @@
 
                 <div class="setup-step">
                     <div><span class="step-number">2</span><strong>Google Apps Script 設定</strong></div>
-                    <p>作成したスプレッドシートで、以下の手順を実行してください：</p>
-                    <ol style="margin: 10px 0; padding-left: 20px;">
-                        <li>「拡張機能」→「Apps Script」をクリック</li>
-                        <li>既存のコードを削除</li>
-                        <li>下のコードをコピーして貼り付け</li>
-                        <li>「保存」をクリック</li>
-                        <li>「デプロイ」→「新しいデプロイ」をクリック</li>
-                        <li>「種類」を「ウェブアプリ」に設定</li>
-                        <li>「次のユーザーとして実行」を「自分」に設定</li>
-                        <li>「アクセスできるユーザー」を「全員」に設定</li>
-                        <li>「デプロイ」をクリック</li>
-                        <li>生成されたURLをコピー</li>
-                    </ol>
-                    
-                    <div class="code-box" id="gasCode">
-function doPost(e) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const settingsSheet = getOrCreateSheet(ss, '設定');
-  const recordsSheet = getOrCreateSheet(ss, '記録');
-  
-  const data = JSON.parse(e.postData.contents);
-  const action = data.action;
-  
-  if (action === 'saveSettings') {
-    settingsSheet.getRange('A1:B4').setValues([
-      ['スタート体重', data.startWeight],
-      ['目標体重', data.targetWeight],
-      ['開始日', data.startDate],
-      ['目標期日', data.targetDate]
-    ]);
-    return ContentService.createTextOutput(JSON.stringify({success: true}));
-  }
-  
-  if (action === 'getSettings') {
-    const values = settingsSheet.getRange('A1:B4').getValues();
-    const settings = {};
-    values.forEach(row => {
-      if (row[0] === 'スタート体重') settings.startWeight = row[1];
-      if (row[0] === '目標体重') settings.targetWeight = row[1];
-      if (row[0] === '開始日') settings.startDate = row[1];
-      if (row[0] === '目標期日') settings.targetDate = row[1];
-    });
-    return ContentService.createTextOutput(JSON.stringify(settings));
-  }
-  
-  if (action === 'addRecord') {
-    const lastRow = recordsSheet.getLastRow();
-    const existingData = recordsSheet.getRange('A:B').getValues();
-    let updated = false;
-    
-    for (let i = 1; i < existingData.length; i++) {
-      if (existingData[i][0] && new Date(existingData[i][0]).toDateString() === new Date(data.date).toDateString()) {
-        recordsSheet.getRange(i + 1, 2).setValue(data.weight);
-        updated = true;
-        break;
-      }
-    }
-    
-    if (!updated) {
-      recordsSheet.appendRow([new Date(data.date), data.weight]);
-    }
-    
-    return ContentService.createTextOutput(JSON.stringify({success: true}));
-  }
-  
-  if (action === 'getRecords') {
-    const data = recordsSheet.getRange('A:B').getValues();
-    const records = [];
-    
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][0] && data[i][1]) {
-        records.push({
-          date: Utilities.formatDate(new Date(data[i][0]), 'JST', 'yyyy-MM-dd'),
-          weight: data[i][1]
-        });
-      }
-    }
-    
-    return ContentService.createTextOutput(JSON.stringify(records));
-  }
-  
-  if (action === 'deleteRecord') {
-    const allData = recordsSheet.getRange('A:B').getValues();
-    for (let i = 1; i < allData.length; i++) {
-      if (allData[i][0] && new Date(allData[i][0]).toDateString() === new Date(data.date).toDateString()) {
-        recordsSheet.deleteRow(i + 1);
-        break;
-      }
-    }
-    return ContentService.createTextOutput(JSON.stringify({success: true}));
-  }
-}
-
-function getOrCreateSheet(ss, name) {
-  let sheet = ss.getSheetByName(name);
-  if (!sheet) {
-    sheet = ss.insertSheet(name);
-    if (name === '記録') {
-      sheet.getRange('A1:B1').setValues([['日付', '体重']]);
-      sheet.getRange('A1:B1').setFontWeight('bold');
-    }
-  }
-  return sheet;
-}
-                    </div>
+                    <p>作成したスプレッドシートで、Apps Scriptを設定してください</p>
                     <button class="copy-btn" onclick="copyGASCode()">📋 コードをコピー</button>
                 </div>
 
@@ -458,17 +474,155 @@ function getOrCreateSheet(ss, name) {
 
     <script>
         let webAppUrl = '';
+        let currentUser = '';
+        let userList = [];
         let dietData = { settings: {}, records: [] };
 
         // 初期化
         function init() {
             const savedUrl = localStorage.getItem('webAppUrl');
+            const savedUser = localStorage.getItem('currentUser');
+            
             if (savedUrl) {
                 webAppUrl = savedUrl;
                 document.getElementById('webAppUrl').value = savedUrl;
-                loadAllData();
+                loadUserList();
             }
+            
+            if (savedUser) {
+                currentUser = savedUser;
+            }
+            
             setDefaultDate();
+        }
+
+        // ユーザー一覧読み込み
+        async function loadUserList() {
+            if (!webAppUrl) return;
+
+            try {
+                const response = await fetch(webAppUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'getUserList' })
+                });
+
+                if (response.ok) {
+                    userList = await response.json();
+                    renderUserList();
+                    updateUserSelector();
+                    
+                    // 現在のユーザーが設定されていて、リストに存在する場合はデータを読み込み
+                    if (currentUser && userList.includes(currentUser)) {
+                        loadAllData();
+                    }
+                } else {
+                    console.error('Failed to load user list');
+                }
+            } catch (error) {
+                console.error('Error loading user list:', error);
+            }
+        }
+
+        // ユーザー一覧表示
+        function renderUserList() {
+            const userListElement = document.getElementById('userList');
+            
+            if (userList.length === 0) {
+                userListElement.innerHTML = '<div class="loading">まだユーザーが登録されていません</div>';
+                return;
+            }
+
+            userListElement.innerHTML = `
+                <h4 style="margin-bottom: 15px;">登録済みユーザー</h4>
+                ${userList.map(user => `
+                    <div class="history-item">
+                        <div class="history-date">${user}</div>
+                        <button class="btn-primary" onclick="selectUser('${user}')" style="padding: 8px 15px; font-size: 14px;">
+                            ${user === currentUser ? '✅ 選択中' : '選択'}
+                        </button>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        // ユーザーセレクター更新
+        function updateUserSelector() {
+            const userSelector = document.getElementById('userSelector');
+            
+            if (userList.length === 0) {
+                userSelector.innerHTML = '<div class="loading">👤 ユーザーを追加してください</div>';
+                return;
+            }
+
+            userSelector.innerHTML = userList.map(user => `
+                <button class="user-btn ${user === currentUser ? 'active' : ''}" onclick="switchUser('${user}')" id="user-${user}">
+                    ${user}
+                </button>
+            `).join('');
+        }
+
+        // 新しいユーザー追加
+        async function addNewUser() {
+            const userName = document.getElementById('newUserName').value.trim();
+            
+            if (!userName) {
+                showResult('userResult', '❌ ユーザー名を入力してください', 'error');
+                return;
+            }
+
+            if (!webAppUrl) {
+                showResult('userResult', '❌ 先にセットアップを完了してください', 'error');
+                return;
+            }
+
+            if (userList.includes(userName)) {
+                showResult('userResult', '❌ そのユーザー名は既に存在します', 'error');
+                return;
+            }
+
+            showResult('userResult', '👤 ユーザーを追加中...', 'loading');
+
+            try {
+                // 設定シートを作成してユーザーを登録
+                const response = await fetch(webAppUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'saveSettings',
+                        user: userName,
+                        startWeight: 0,
+                        targetWeight: 0,
+                        startDate: '',
+                        targetDate: ''
+                    })
+                });
+
+                if (response.ok) {
+                    showResult('userResult', '✅ ユーザーを追加しました！', 'success');
+                    document.getElementById('newUserName').value = '';
+                    
+                    // ユーザーリストを再読み込み
+                    await loadUserList();
+                    
+                    // 追加したユーザーを自動選択
+                    selectUser(userName);
+                } else {
+                    throw new Error('追加エラー');
+                }
+            } catch (error) {
+                showResult('userResult', '❌ ユーザーの追加に失敗しました', 'error');
+            }
+        }
+
+        // ユーザー選択
+        function selectUser(user) {
+            currentUser = user;
+            localStorage.setItem('currentUser', user);
+            
+            renderUserList();
+            updateUserSelector();
+            loadAllData();
+            
+            showResult('userResult', `✅ ${user}さんを選択しました`, 'success');
         }
 
         // デフォルト日付設定
@@ -485,7 +639,98 @@ function getOrCreateSheet(ss, name) {
 
         // GASコードコピー
         function copyGASCode() {
-            const code = document.getElementById('gasCode').textContent;
+            const code = `function doPost(e) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const data = JSON.parse(e.postData.contents);
+  const action = data.action;
+  const user = data.user || 'みちこ';
+  
+  if (action === 'saveSettings') {
+    const settingsSheet = getOrCreateSheet(ss, \`\${user}設定\`);
+    settingsSheet.getRange('A1:B4').setValues([
+      ['スタート体重', data.startWeight],
+      ['目標体重', data.targetWeight],
+      ['開始日', data.startDate],
+      ['目標期日', data.targetDate]
+    ]);
+    return ContentService.createTextOutput(JSON.stringify({success: true}));
+  }
+  
+  if (action === 'getSettings') {
+    const settingsSheet = getOrCreateSheet(ss, \`\${user}設定\`);
+    const values = settingsSheet.getRange('A1:B4').getValues();
+    const settings = {};
+    values.forEach(row => {
+      if (row[0] === 'スタート体重') settings.startWeight = row[1];
+      if (row[0] === '目標体重') settings.targetWeight = row[1];
+      if (row[0] === '開始日') settings.startDate = row[1];
+      if (row[0] === '目標期日') settings.targetDate = row[1];
+    });
+    return ContentService.createTextOutput(JSON.stringify(settings));
+  }
+  
+  if (action === 'addRecord') {
+    const recordsSheet = getOrCreateSheet(ss, \`\${user}記録\`);
+    const existingData = recordsSheet.getRange('A:B').getValues();
+    let updated = false;
+    
+    for (let i = 1; i < existingData.length; i++) {
+      if (existingData[i][0] && new Date(existingData[i][0]).toDateString() === new Date(data.date).toDateString()) {
+        recordsSheet.getRange(i + 1, 2).setValue(data.weight);
+        updated = true;
+        break;
+      }
+    }
+    
+    if (!updated) {
+      recordsSheet.appendRow([new Date(data.date), data.weight]);
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({success: true}));
+  }
+  
+  if (action === 'getRecords') {
+    const recordsSheet = getOrCreateSheet(ss, \`\${user}記録\`);
+    const data = recordsSheet.getRange('A:B').getValues();
+    const records = [];
+    
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] && data[i][1]) {
+        records.push({
+          date: Utilities.formatDate(new Date(data[i][0]), 'JST', 'yyyy-MM-dd'),
+          weight: data[i][1]
+        });
+      }
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify(records));
+  }
+  
+  if (action === 'deleteRecord') {
+    const recordsSheet = getOrCreateSheet(ss, \`\${user}記録\`);
+    const allData = recordsSheet.getRange('A:B').getValues();
+    for (let i = 1; i < allData.length; i++) {
+      if (allData[i][0] && new Date(allData[i][0]).toDateString() === new Date(data.date).toDateString()) {
+        recordsSheet.deleteRow(i + 1);
+        break;
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({success: true}));
+  }
+}
+
+function getOrCreateSheet(ss, name) {
+  let sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+    if (name.endsWith('記録')) {
+      sheet.getRange('A1:B1').setValues([['日付', '体重']]);
+      sheet.getRange('A1:B1').setFontWeight('bold');
+    }
+  }
+  return sheet;
+}`;
+            
             navigator.clipboard.writeText(code).then(() => {
                 alert('📋 コードをコピーしました！');
             });
@@ -504,15 +749,15 @@ function getOrCreateSheet(ss, name) {
             try {
                 const response = await fetch(url, {
                     method: 'POST',
-                    body: JSON.stringify({ action: 'getSettings' })
+                    body: JSON.stringify({ action: 'getSettings', user: currentUser })
                 });
 
                 if (response.ok) {
                     webAppUrl = url;
                     localStorage.setItem('webAppUrl', url);
-                    showResult('connectionResult', '✅ 接続成功！データの読み込みを開始します', 'success');
+                    showResult('connectionResult', '✅ 接続成功！ユーザー管理タブでユーザーを追加してください', 'success');
                     updateSyncStatus('✅ 接続済み');
-                    loadAllData();
+                    loadUserList();
                 } else {
                     throw new Error('接続エラー');
                 }
@@ -524,7 +769,7 @@ function getOrCreateSheet(ss, name) {
 
         // データ読み込み
         async function loadAllData() {
-            if (!webAppUrl) return;
+            if (!webAppUrl || !currentUser) return;
 
             try {
                 updateSyncStatus('🔄 同期中...');
@@ -532,7 +777,7 @@ function getOrCreateSheet(ss, name) {
                 // 設定データ読み込み
                 const settingsResponse = await fetch(webAppUrl, {
                     method: 'POST',
-                    body: JSON.stringify({ action: 'getSettings' })
+                    body: JSON.stringify({ action: 'getSettings', user: currentUser })
                 });
                 
                 if (settingsResponse.ok) {
@@ -542,7 +787,7 @@ function getOrCreateSheet(ss, name) {
                 // 記録データ読み込み
                 const recordsResponse = await fetch(webAppUrl, {
                     method: 'POST',
-                    body: JSON.stringify({ action: 'getRecords' })
+                    body: JSON.stringify({ action: 'getRecords', user: currentUser })
                 });
                 
                 if (recordsResponse.ok) {
@@ -566,6 +811,11 @@ function getOrCreateSheet(ss, name) {
                 return;
             }
 
+            if (!currentUser) {
+                showResult('inputResult', '❌ 先にユーザーを選択してください', 'error');
+                return;
+            }
+
             const date = document.getElementById('measureDate').value;
             const weight = parseFloat(document.getElementById('measureWeight').value);
             
@@ -581,6 +831,7 @@ function getOrCreateSheet(ss, name) {
                     method: 'POST',
                     body: JSON.stringify({
                         action: 'addRecord',
+                        user: currentUser,
                         date: date,
                         weight: weight
                     })
@@ -625,6 +876,7 @@ function getOrCreateSheet(ss, name) {
                     method: 'POST',
                     body: JSON.stringify({
                         action: 'deleteRecord',
+                        user: currentUser,
                         date: date
                     })
                 });
@@ -639,6 +891,57 @@ function getOrCreateSheet(ss, name) {
             }
         }
 
+        // アドバイス生成
+        function generateAdvice(settings, records) {
+            if (!settings.targetWeight || !settings.targetDate || records.length === 0) {
+                return null;
+            }
+
+            const currentWeight = records[records.length - 1].weight;
+            const remaining = currentWeight - settings.targetWeight;
+            const today = new Date();
+            const targetDate = new Date(settings.targetDate);
+            const daysLeft = Math.floor((targetDate - today) / (1000 * 60 * 60 * 24));
+            
+            if (daysLeft <= 0) {
+                return {
+                    emoji: '🎯',
+                    title: '目標期日到達！',
+                    text: `目標期日になりました！現在の体重は${currentWeight.toFixed(1)}kgです。目標達成まであと${remaining.toFixed(1)}kgです。`
+                };
+            }
+
+            const neededDaily = remaining > 0 ? (remaining * 1000) / daysLeft : 0;
+            
+            if (remaining <= 0) {
+                return {
+                    emoji: '🎉',
+                    title: '目標達成おめでとう！',
+                    text: `目標体重を${Math.abs(remaining).toFixed(1)}kg上回って達成しています！素晴らしい成果です！`
+                };
+            }
+
+            if (neededDaily > 500) {
+                return {
+                    emoji: '⚠️',
+                    title: '要注意！ペースアップが必要',
+                    text: `目標達成には1日あたり${Math.round(neededDaily)}g減量が必要です。現実的な目標に見直すか、より積極的な取り組みが必要かもしれません。`
+                };
+            } else if (neededDaily > 200) {
+                return {
+                    emoji: '💪',
+                    title: 'もう一踏ん張り！',
+                    text: `目標達成には1日あたり${Math.round(neededDaily)}g減量が必要です。食事管理と運動を継続すれば達成可能です！`
+                };
+            } else {
+                return {
+                    emoji: '😊',
+                    title: '順調なペースです',
+                    text: `目標達成には1日あたり${Math.round(neededDaily)}g減量で十分です。現在のペースを維持すれば達成できそうです！`
+                };
+            }
+        }
+
         // ダッシュボード更新
         function updateDashboard() {
             const { settings, records } = dietData;
@@ -646,7 +949,7 @@ function getOrCreateSheet(ss, name) {
             if (!settings.startWeight || records.length === 0) {
                 document.getElementById('dashboardContent').innerHTML = `
                     <div class="setup-card">
-                        <h3>📊 ダッシュボード</h3>
+                        <h3>📊 ${currentUser}さんのダッシュボード</h3>
                         <p>設定と体重記録を追加すると、進捗が表示されます</p>
                     </div>
                 `;
@@ -668,8 +971,35 @@ function getOrCreateSheet(ss, name) {
             const projectedWeight = daysLeft > 0 ? currentWeight - (avgDaily * daysLeft / 1000) : currentWeight;
             const gap = projectedWeight - settings.targetWeight;
             const neededDaily = daysLeft > 0 ? (remaining * 1000) / daysLeft : 0;
-            
+
+            // 進捗率計算
+            const totalLoss = settings.startWeight - settings.targetWeight;
+            const progressRate = Math.min(100, (weightLoss / totalLoss) * 100);
+
+            // アドバイス生成
+            const advice = generateAdvice(settings, records);
+
             document.getElementById('dashboardContent').innerHTML = `
+                <div class="stat-card">
+                    <h3 style="color: white; margin-bottom: 15px;">${currentUser}さんの進捗</h3>
+                    <svg class="progress-ring" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="36"></circle>
+                        <circle cx="40" cy="40" r="36" class="progress" style="stroke-dasharray: ${progressRate * 2.26} 226;"></circle>
+                        <text x="40" y="45" text-anchor="middle" style="fill: white; font-size: 14px; font-weight: bold;">${Math.round(progressRate)}%</text>
+                    </svg>
+                    <div class="stat-label">目標達成率</div>
+                </div>
+                
+                ${advice ? `
+                <div class="advice-card">
+                    <div class="advice-title">
+                        <span class="emoji">${advice.emoji}</span>
+                        ${advice.title}
+                    </div>
+                    <div class="advice-text">${advice.text}</div>
+                </div>
+                ` : ''}
+                
                 <div class="stat-card">
                     <div class="stat-value">${currentWeight.toFixed(1)}</div>
                     <div class="stat-label">現在の体重 (kg)</div>
@@ -714,7 +1044,7 @@ function getOrCreateSheet(ss, name) {
             const historyList = document.getElementById('historyList');
             
             if (dietData.records.length === 0) {
-                historyList.innerHTML = '<div class="loading">まだ記録がありません</div>';
+                historyList.innerHTML = `<div class="loading">${currentUser}さんの記録がまだありません</div>`;
                 return;
             }
             
@@ -745,6 +1075,9 @@ function getOrCreateSheet(ss, name) {
             }
             if (tabName === 'dashboard') {
                 updateDashboard();
+            }
+            if (tabName === 'users') {
+                renderUserList();
             }
         }
 
