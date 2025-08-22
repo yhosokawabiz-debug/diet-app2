@@ -1,79 +1,4 @@
-// 新規登録モーダル表示
-        function showRegisterModal() {
-            closeModal('loginModal');
-            showModal('registerModal');
-        }
-
-        // ログインモーダル表示
-        function showLoginModal() {
-            closeModal('registerModal');
-            showModal('loginModal');
-        }
-
-        // 新規ユーザー登録
-        async function registerUser() {
-            const username = document.getElementById('registerUser').value.trim();
-            const password = document.getElementById('registerPassword').value;
-            const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
-            
-            if (!username || !password || !passwordConfirm) {
-                alert('❌ すべての項目を入力してください');
-                return;
-            }
-
-            if (password !== passwordConfirm) {
-                alert('❌ パスワードが一致しません');
-                return;
-            }
-
-            if (password.length < 4) {
-                alert('❌ パスワードは4文字以上で設定してください');
-                return;
-            }
-
-            if (!webAppUrl) {
-                alert('❌ 先にセットアップを完了してください');
-                showLoginModal();
-                return;
-            }
-
-            try {
-                // ユーザー名の重複チェック
-                await loadUserList();
-                if (userList.includes(username)) {
-                    alert('❌ そのユーザー名は既に使用されています');
-                    return;
-                }
-
-                const response = await fetch(webAppUrl, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'addUser',
-                        username: username,
-                        password: password
-                    })
-                });
-
-                if (response.ok) {
-                    alert('✅ アカウントを作成しました！ログインしてください');
-                    
-                    // 登録フォームをクリア
-                    document.getElementById('registerUser').value = '';
-                    document.getElementById('registerPassword').value = '';
-                    document.getElementById('registerPasswordConfirm').value = '';
-                    
-                    // ログイン画面に戻る
-                    showLoginModal();
-                    
-                    // ユーザー名を自動入力
-                    document.getElementById('loginUser').value = username;
-                } else {
-                    throw new Error('登録エラー');
-                }
-            } catch (error) {
-                alert('❌ アカウントの作成に失敗しました');
-            }
-        }<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
@@ -780,18 +705,84 @@
                 webAppUrl = savedUrl;
                 document.getElementById('webAppUrl').value = savedUrl;
                 loadUserList();
+                showModal('loginModal');
+            } else {
+                alert('初回利用の方は、まず「セットアップ」タブでGoogle Apps Scriptとの接続を完了してください');
+                closeModal('loginModal');
             }
             
             setDefaultDate();
+        }
+
+        // 新規登録モーダル表示
+        function showRegisterModal() {
+            closeModal('loginModal');
+            showModal('registerModal');
+        }
+
+        // ログインモーダル表示
+        function showLoginModal() {
+            closeModal('registerModal');
+            showModal('loginModal');
+        }
+
+        // 新規ユーザー登録
+        async function registerUser() {
+            const username = document.getElementById('registerUser').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
             
-            // 初回アクセス時の処理
-            if (savedUrl) {
-                // セットアップ済みならログインモーダルを表示
-                showModal('loginModal');
-            } else {
-                // 未セットアップなら先にセットアップを促す
-                alert('初回利用の方は、まず「セットアップ」タブでGoogle Apps Scriptとの接続を完了してください');
-                closeModal('loginModal');
+            if (!username || !password || !passwordConfirm) {
+                alert('❌ すべての項目を入力してください');
+                return;
+            }
+
+            if (password !== passwordConfirm) {
+                alert('❌ パスワードが一致しません');
+                return;
+            }
+
+            if (password.length < 4) {
+                alert('❌ パスワードは4文字以上で設定してください');
+                return;
+            }
+
+            if (!webAppUrl) {
+                alert('❌ 先にセットアップを完了してください');
+                showLoginModal();
+                return;
+            }
+
+            try {
+                await loadUserList();
+                if (userList.includes(username)) {
+                    alert('❌ そのユーザー名は既に使用されています');
+                    return;
+                }
+
+                const response = await fetch(webAppUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'addUser',
+                        username: username,
+                        password: password
+                    })
+                });
+
+                if (response.ok) {
+                    alert('✅ アカウントを作成しました！ログインしてください');
+                    
+                    document.getElementById('registerUser').value = '';
+                    document.getElementById('registerPassword').value = '';
+                    document.getElementById('registerPasswordConfirm').value = '';
+                    
+                    showLoginModal();
+                    document.getElementById('loginUser').value = username;
+                } else {
+                    throw new Error('登録エラー');
+                }
+            } catch (error) {
+                alert('❌ アカウントの作成に失敗しました');
             }
         }
 
@@ -810,7 +801,6 @@
                 return;
             }
 
-            // パスワード確認
             verifyUserPassword(username, password).then(valid => {
                 if (valid) {
                     currentUser = username;
@@ -856,7 +846,6 @@
             showModal('loginModal');
             updateUI();
             
-            // フォームをクリア
             document.getElementById('loginUser').value = '';
             document.getElementById('loginPassword').value = '';
         }
@@ -972,10 +961,8 @@
             if (user === currentUser) return;
             
             if (isAdmin || user === '管理者') {
-                // 管理者は自由に切り替え可能
                 switchUser(user);
             } else {
-                // 一般ユーザーはパスワード入力が必要
                 pendingUserSwitch = user;
                 document.getElementById('passwordPrompt').textContent = `${user}さんのパスワードを入力してください`;
                 showModal('passwordModal');
@@ -1130,192 +1117,7 @@
 
         // GASコードコピー
         function copyGASCode() {
-            const code = `function doPost(e) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const data = JSON.parse(e.postData.contents);
-  const action = data.action;
-  
-  if (action === 'getUserList') {
-    return getUserList(ss);
-  }
-  
-  if (action === 'addUser') {
-    return addUser(ss, data.username, data.password);
-  }
-  
-  if (action === 'deleteUser') {
-    return deleteUser(ss, data.username);
-  }
-  
-  if (action === 'verifyPassword') {
-    return verifyPassword(ss, data.username, data.password);
-  }
-  
-  const user = data.user;
-  if (!user) {
-    return ContentService.createTextOutput(JSON.stringify({error: 'User not specified'}));
-  }
-  
-  if (action === 'saveSettings') {
-    const settingsSheet = getOrCreateSheet(ss, \`\${user}設定\`);
-    settingsSheet.getRange('A1:B4').setValues([
-      ['スタート体重', data.startWeight],
-      ['目標体重', data.targetWeight],
-      ['開始日', data.startDate],
-      ['目標期日', data.targetDate]
-    ]);
-    return ContentService.createTextOutput(JSON.stringify({success: true}));
-  }
-  
-  if (action === 'getSettings') {
-    const settingsSheet = getOrCreateSheet(ss, \`\${user}設定\`);
-    const values = settingsSheet.getRange('A1:B4').getValues();
-    const settings = {};
-    values.forEach(row => {
-      if (row[0] === 'スタート体重') settings.startWeight = row[1];
-      if (row[0] === '目標体重') settings.targetWeight = row[1];
-      if (row[0] === '開始日') settings.startDate = row[1];
-      if (row[0] === '目標期日') settings.targetDate = row[1];
-    });
-    return ContentService.createTextOutput(JSON.stringify(settings));
-  }
-  
-  if (action === 'addRecord') {
-    const recordsSheet = getOrCreateSheet(ss, \`\${user}記録\`);
-    const existingData = recordsSheet.getRange('A:B').getValues();
-    let updated = false;
-    
-    for (let i = 1; i < existingData.length; i++) {
-      if (existingData[i][0] && new Date(existingData[i][0]).toDateString() === new Date(data.date).toDateString()) {
-        recordsSheet.getRange(i + 1, 2).setValue(data.weight);
-        updated = true;
-        break;
-      }
-    }
-    
-    if (!updated) {
-      recordsSheet.appendRow([new Date(data.date), data.weight]);
-    }
-    
-    return ContentService.createTextOutput(JSON.stringify({success: true}));
-  }
-  
-  if (action === 'getRecords') {
-    const recordsSheet = getOrCreateSheet(ss, \`\${user}記録\`);
-    const data = recordsSheet.getRange('A:B').getValues();
-    const records = [];
-    
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][0] && data[i][1]) {
-        records.push({
-          date: Utilities.formatDate(new Date(data[i][0]), 'JST', 'yyyy-MM-dd'),
-          weight: data[i][1]
-        });
-      }
-    }
-    
-    return ContentService.createTextOutput(JSON.stringify(records));
-  }
-  
-  if (action === 'deleteRecord') {
-    const recordsSheet = getOrCreateSheet(ss, \`\${user}記録\`);
-    const allData = recordsSheet.getRange('A:B').getValues();
-    for (let i = 1; i < allData.length; i++) {
-      if (allData[i][0] && new Date(allData[i][0]).toDateString() === new Date(data.date).toDateString()) {
-        recordsSheet.deleteRow(i + 1);
-        break;
-      }
-    }
-    return ContentService.createTextOutput(JSON.stringify({success: true}));
-  }
-}
-
-function getUserList(ss) {
-  const userSheet = getOrCreateSheet(ss, 'ユーザー管理');
-  const data = userSheet.getRange('A:B').getValues();
-  const users = ['管理者'];
-  const passwords = {};
-  
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0] && data[i][1]) {
-      users.push(data[i][0]);
-      passwords[data[i][0]] = data[i][1];
-    }
-  }
-  
-  return ContentService.createTextOutput(JSON.stringify({users, passwords}));
-}
-
-function addUser(ss, username, password) {
-  const userSheet = getOrCreateSheet(ss, 'ユーザー管理');
-  userSheet.appendRow([username, password]);
-  
-  // 設定シートも作成
-  const settingsSheet = getOrCreateSheet(ss, \`\${username}設定\`);
-  
-  return ContentService.createTextOutput(JSON.stringify({success: true}));
-}
-
-function deleteUser(ss, username) {
-  const userSheet = getOrCreateSheet(ss, 'ユーザー管理');
-  const data = userSheet.getRange('A:C').getValues();
-  
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === username) {
-      userSheet.deleteRow(i + 1);
-      break;
-    }
-  }
-  
-  // 関連シートも削除
-  try {
-    const settingsSheet = ss.getSheetByName(\`\${username}設定\`);
-    if (settingsSheet) ss.deleteSheet(settingsSheet);
-    
-    const recordsSheet = ss.getSheetByName(\`\${username}記録\`);
-    if (recordsSheet) ss.deleteSheet(recordsSheet);
-  } catch (e) {
-    // シートが存在しない場合は無視
-  }
-  
-  return ContentService.createTextOutput(JSON.stringify({success: true}));
-}
-
-function verifyPassword(ss, username, password) {
-  if (username === '管理者') {
-    return ContentService.createTextOutput(JSON.stringify({valid: password === 'admin123'}));
-  }
-  
-  const userSheet = getOrCreateSheet(ss, 'ユーザー管理');
-  const data = userSheet.getRange('A:B').getValues();
-  
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === username && data[i][1] === password) {
-      return ContentService.createTextOutput(JSON.stringify({valid: true}));
-    }
-  }
-  
-  return ContentService.createTextOutput(JSON.stringify({valid: false}));
-}
-
-function getOrCreateSheet(ss, name) {
-  let sheet = ss.getSheetByName(name);
-  if (!sheet) {
-    sheet = ss.insertSheet(name);
-    if (name.endsWith('記録')) {
-      sheet.getRange('A1:B1').setValues([['日付', '体重']]);
-      sheet.getRange('A1:B1').setFontWeight('bold');
-    } else if (name === 'ユーザー管理') {
-      sheet.getRange('A1:B1').setValues([['ユーザー名', 'パスワード']]);
-      sheet.getRange('A1:B1').setFontWeight('bold');
-    }
-  }
-  return sheet;
-}`;
-            
-            navigator.clipboard.writeText(code).then(() => {
-                alert('📋 コードをコピーしました！');
-            });
+            alert('GASコード取得機能は別途提供されます');
         }
 
         // 接続テスト
