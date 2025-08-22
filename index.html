@@ -1,4 +1,79 @@
-<!DOCTYPE html>
+// 新規登録モーダル表示
+        function showRegisterModal() {
+            closeModal('loginModal');
+            showModal('registerModal');
+        }
+
+        // ログインモーダル表示
+        function showLoginModal() {
+            closeModal('registerModal');
+            showModal('loginModal');
+        }
+
+        // 新規ユーザー登録
+        async function registerUser() {
+            const username = document.getElementById('registerUser').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+            
+            if (!username || !password || !passwordConfirm) {
+                alert('❌ すべての項目を入力してください');
+                return;
+            }
+
+            if (password !== passwordConfirm) {
+                alert('❌ パスワードが一致しません');
+                return;
+            }
+
+            if (password.length < 4) {
+                alert('❌ パスワードは4文字以上で設定してください');
+                return;
+            }
+
+            if (!webAppUrl) {
+                alert('❌ 先にセットアップを完了してください');
+                showLoginModal();
+                return;
+            }
+
+            try {
+                // ユーザー名の重複チェック
+                await loadUserList();
+                if (userList.includes(username)) {
+                    alert('❌ そのユーザー名は既に使用されています');
+                    return;
+                }
+
+                const response = await fetch(webAppUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'addUser',
+                        username: username,
+                        password: password
+                    })
+                });
+
+                if (response.ok) {
+                    alert('✅ アカウントを作成しました！ログインしてください');
+                    
+                    // 登録フォームをクリア
+                    document.getElementById('registerUser').value = '';
+                    document.getElementById('registerPassword').value = '';
+                    document.getElementById('registerPasswordConfirm').value = '';
+                    
+                    // ログイン画面に戻る
+                    showLoginModal();
+                    
+                    // ユーザー名を自動入力
+                    document.getElementById('loginUser').value = username;
+                } else {
+                    throw new Error('登録エラー');
+                }
+            } catch (error) {
+                alert('❌ アカウントの作成に失敗しました');
+            }
+        }<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
@@ -525,7 +600,29 @@
                 <input type="password" id="loginPassword" class="input-field" placeholder="パスワードを入力">
             </div>
             <button class="btn btn-primary" onclick="login()">ログイン</button>
+            <button class="btn btn-secondary" onclick="showRegisterModal()">👤 新規登録</button>
             <button class="btn btn-admin" onclick="adminLogin()">👑 管理者としてログイン</button>
+        </div>
+    </div>
+
+    <!-- 新規登録モーダル -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <h3>👤 新規ユーザー登録</h3>
+            <div class="input-group">
+                <label class="input-label">ユーザー名</label>
+                <input type="text" id="registerUser" class="input-field" placeholder="例: 太郎、花子、ママ、パパ">
+            </div>
+            <div class="input-group">
+                <label class="input-label">パスワード</label>
+                <input type="password" id="registerPassword" class="input-field" placeholder="パスワードを設定">
+            </div>
+            <div class="input-group">
+                <label class="input-label">パスワード確認</label>
+                <input type="password" id="registerPasswordConfirm" class="input-field" placeholder="もう一度入力">
+            </div>
+            <button class="btn btn-primary" onclick="registerUser()">登録</button>
+            <button class="btn btn-secondary" onclick="showLoginModal()">ログインに戻る</button>
         </div>
     </div>
 
@@ -687,8 +784,15 @@
             
             setDefaultDate();
             
-            // 初回アクセス時はログインモーダルを表示
-            showModal('loginModal');
+            // 初回アクセス時の処理
+            if (savedUrl) {
+                // セットアップ済みならログインモーダルを表示
+                showModal('loginModal');
+            } else {
+                // 未セットアップなら先にセットアップを促す
+                alert('初回利用の方は、まず「セットアップ」タブでGoogle Apps Scriptとの接続を完了してください');
+                closeModal('loginModal');
+            }
         }
 
         // ログイン
