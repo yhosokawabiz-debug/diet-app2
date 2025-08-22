@@ -946,7 +946,8 @@
                 return;
             }
 
-            const visibleUsers = isAdmin ? userList : userList.filter(user => user === currentUser || user === '管理者');
+            // 管理者でない場合は、管理者ボタンを表示しない
+            const visibleUsers = isAdmin ? userList : userList.filter(user => user !== '管理者');
             
             userSelector.innerHTML = visibleUsers.map(user => `
                 <button class="user-btn ${user === currentUser ? 'active' : ''} ${user !== '管理者' && user !== currentUser ? 'protected' : ''}" 
@@ -960,9 +961,18 @@
         function requestUserSwitch(user) {
             if (user === currentUser) return;
             
-            if (isAdmin || user === '管理者') {
+            // 管理者への切り替えは常にパスワードが必要
+            if (user === '管理者') {
+                // ログアウトして管理者ログインを促す
+                alert('管理者モードにするには、一度ログアウトして「管理者としてログイン」を使用してください');
+                return;
+            }
+            
+            if (isAdmin) {
+                // 管理者は自由に一般ユーザーに切り替え可能
                 switchUser(user);
             } else {
+                // 一般ユーザーは他の一般ユーザーにパスワード入力で切り替え
                 pendingUserSwitch = user;
                 document.getElementById('passwordPrompt').textContent = `${user}さんのパスワードを入力してください`;
                 showModal('passwordModal');
